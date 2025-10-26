@@ -91,7 +91,7 @@ export default function AdminLogin() {
               />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Yes India Admin</h1>
-            <p className="text-sm text-gray-500 mt-2">Sign in to manage the Monsoon Vibes 2025 dashboard</p>
+            <p className="text-sm text-gray-500 mt-2">Sign in to manage the Principals Summit 2025 dashboard</p>
           </motion.div>
         </div>
 

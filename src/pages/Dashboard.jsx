@@ -70,46 +70,25 @@ const ZONES = [
   "Not Applicable"
 ];
 
-// Session Schedule configurations with start and end times
+// Session Schedule configurations with start and end times - Only Day 1
 const day1Schedule = {
   morning: { 
-    start: "09:30", 
+    start: "09:00", 
     end: "11:10", 
-    display: "Morning 10:00 AM",
-    date: "2025-10-25"
+    display: "Morning 09:30 AM",
+    date: "2025-10-27"
   },
   afternoon: { 
     start: "14:30", 
-    end: "13:17", 
-    display: "Afternoon 2:50 PM",
-    date: "2025-10-25"
-  },
-  evening: { 
-    start: "18:15", 
-    end: "18:50", 
-    display: "Evening 6:20 PM",
-    date: "2025-10-25"
-  }
-};
-
-const day2Schedule = {
-  morning: { 
-    start: "08:15", 
-    end: "08:45", 
-    display: "Morning 8:30 AM",
-    date: "2025-10-26"
-  },
-  afternoon: { 
-    start: "14:15", 
-    end: "16:45", 
+    end: "14:40", 
     display: "Afternoon 2:30 PM",
-    date: "2025-10-26"
+    date: "2025-10-27"
   },
   evening: { 
-    start: "18:30", 
-    end: "21:00", 
-    display: "Evening 7:00 PM",
-    date: "2025-10-26"
+    start: "18:20", 
+    end: "18:40", 
+    display: "Evening 6:30 PM",
+    date: "2025-10-27"
   }
 };
 
@@ -182,18 +161,6 @@ const formatFirebaseTimestamp = (timestamp) => {
   }
 };
 
-// Helper function to get schedule display
-const getScheduleDisplay = (dayNum, scheduleType) => {
-  const schedule = dayNum === "1" ? day1Schedule : day2Schedule;
-  return schedule[scheduleType]?.display || scheduleType || "Not Marked";
-};
-
-// Helper function to get schedule time
-const getScheduleTime = (dayNum, scheduleType) => {
-  const schedule = dayNum === "1" ? day1Schedule : day2Schedule;
-  return schedule[scheduleType]?.time || "";
-};
-
 // Helper function to get date only for sorting/grouping
 const getDateOnly = (timestamp) => {
   if (!timestamp) return new Date(0);
@@ -211,6 +178,12 @@ const getDateOnly = (timestamp) => {
     console.error("Error parsing timestamp:", error);
     return new Date(0);
   }
+};
+
+// Helper function to get schedule display
+const getScheduleDisplay = (dayNum, scheduleType) => {
+  const scheduleData = dayNum === "1" ? day1Schedule : {};
+  return scheduleData[scheduleType]?.display || scheduleType;
 };
 
 // Pagination Component
@@ -312,7 +285,7 @@ export default function AdminDashboard() {
   const [editFormData, setEditFormData] = useState({});
   const [reportFilter, setReportFilter] = useState("all");
   const [reportZoneFilter, setReportZoneFilter] = useState("");
-  const [scheduleFilter, setScheduleFilter] = useState({ day1: "", day2: "" });
+  const [scheduleFilter, setScheduleFilter] = useState({ day1: "" });
   const [manualAttendanceData, setManualAttendanceData] = useState({});
   const [selectedUserForManual, setSelectedUserForManual] = useState(null);
   const [showUserSelection, setShowUserSelection] = useState(false);
@@ -401,24 +374,19 @@ export default function AdminDashboard() {
 
     if (attendance === "day1") {
       filtered = filtered.filter((u) => u.day1Attendance);
-    } else if (attendance === "day2") {
-      filtered = filtered.filter((u) => u.day2Attendance);
     } else if (attendance === "both") {
-      filtered = filtered.filter((u) => u.day1Attendance && u.day2Attendance);
+      filtered = filtered.filter((u) => u.day1Attendance);
     } else if (attendance === "none") {
-      filtered = filtered.filter((u) => !u.day1Attendance && !u.day2Attendance);
+      filtered = filtered.filter((u) => !u.day1Attendance);
     } else if (attendance === "manual") {
-      filtered = filtered.filter((u) => u.day1ManualEntry || u.day2ManualEntry);
+      filtered = filtered.filter((u) => u.day1ManualEntry);
     } else if (attendance === "late") {
-      filtered = filtered.filter((u) => u.day1LateMinutes > 0 || u.day2LateMinutes > 0);
+      filtered = filtered.filter((u) => u.day1LateMinutes > 0);
     }
 
     // Apply schedule filters
     if (schedule.day1) {
       filtered = filtered.filter((u) => u.day1Schedule === schedule.day1);
-    }
-    if (schedule.day2) {
-      filtered = filtered.filter((u) => u.day2Schedule === schedule.day2);
     }
 
     setFilteredUsers(filtered);
@@ -570,14 +538,9 @@ export default function AdminDashboard() {
       zone: user.zone || "",
       day1Attendance: user.day1Attendance || false,
       day1Schedule: user.day1Schedule || "",
-      day2Attendance: user.day2Attendance || false,
-      day2Schedule: user.day2Schedule || "",
       day1LateMinutes: user.day1LateMinutes || 0,
       day1Remarks: user.day1Remarks || "",
-      day2LateMinutes: user.day2LateMinutes || 0,
-      day2Remarks: user.day2Remarks || "",
-      day1ManualEntry: user.day1ManualEntry || false,
-      day2ManualEntry: user.day2ManualEntry || false
+      day1ManualEntry: user.day1ManualEntry || false
     });
   };
 
@@ -664,8 +627,6 @@ export default function AdminDashboard() {
         const dayField = currentSession.day;
         const scheduleType = Object.keys(day1Schedule).find(key => 
           day1Schedule[key].display === currentSession.display
-        ) || Object.keys(day2Schedule).find(key => 
-          day2Schedule[key].display === currentSession.display
         );
 
         const updateData = {
@@ -729,14 +690,9 @@ export default function AdminDashboard() {
         zone: editFormData.zone,
         day1Attendance: editFormData.day1Attendance,
         day1Schedule: editFormData.day1Schedule,
-        day2Attendance: editFormData.day2Attendance,
-        day2Schedule: editFormData.day2Schedule,
         day1LateMinutes: editFormData.day1LateMinutes || 0,
         day1Remarks: editFormData.day1Remarks || "",
-        day2LateMinutes: editFormData.day2LateMinutes || 0,
-        day2Remarks: editFormData.day2Remarks || "",
         day1ManualEntry: editFormData.day1ManualEntry || false,
-        day2ManualEntry: editFormData.day2ManualEntry || false,
         lastUpdated: new Date()
       });
       setEditingUser(null);
@@ -853,15 +809,10 @@ export default function AdminDashboard() {
         ...newUser,
         registeredAt: new Date(),
         day1Attendance: false,
-        day2Attendance: false,
         day1Schedule: "",
-        day2Schedule: "",
         day1LateMinutes: 0,
-        day2LateMinutes: 0,
         day1Remarks: "",
-        day2Remarks: "",
-        day1ManualEntry: false,
-        day2ManualEntry: false
+        day1ManualEntry: false
       });
 
       setNewUser({
@@ -942,27 +893,19 @@ export default function AdminDashboard() {
   const stats = {
     totalRegistered: registeredUsers.length,
     day1Attendance: registeredUsers.filter((u) => u.day1Attendance).length,
-    day2Attendance: registeredUsers.filter((u) => u.day2Attendance).length,
-    bothDays: registeredUsers.filter((u) => u.day1Attendance && u.day2Attendance).length,
+    bothDays: registeredUsers.filter((u) => u.day1Attendance).length,
     day1Schedules: {
       morning: registeredUsers.filter(u => u.day1Schedule === 'morning').length,
       afternoon: registeredUsers.filter(u => u.day1Schedule === 'afternoon').length,
       evening: registeredUsers.filter(u => u.day1Schedule === 'evening').length
     },
-    day2Schedules: {
-      morning: registeredUsers.filter(u => u.day2Schedule === 'morning').length,
-      afternoon: registeredUsers.filter(u => u.day2Schedule === 'afternoon').length,
-      evening: registeredUsers.filter(u => u.day2Schedule === 'evening').length
-    },
     manualEntries: {
       day1: registeredUsers.filter(u => u.day1ManualEntry).length,
-      day2: registeredUsers.filter(u => u.day2ManualEntry).length,
-      total: registeredUsers.filter(u => u.day1ManualEntry || u.day2ManualEntry).length
+      total: registeredUsers.filter(u => u.day1ManualEntry).length
     },
     lateEntries: {
       day1: registeredUsers.filter(u => u.day1LateMinutes > 0).length,
-      day2: registeredUsers.filter(u => u.day2LateMinutes > 0).length,
-      total: registeredUsers.filter(u => u.day1LateMinutes > 0 || u.day2LateMinutes > 0).length
+      total: registeredUsers.filter(u => u.day1LateMinutes > 0).length
     },
     feedback: {
       total: feedbackData.length,
@@ -982,16 +925,13 @@ export default function AdminDashboard() {
       zone,
       registered: usersInZone.length,
       day1: usersInZone.filter((u) => u.day1Attendance).length,
-      day2: usersInZone.filter((u) => u.day2Attendance).length,
-      manualEntries: usersInZone.filter(u => u.day1ManualEntry || u.day2ManualEntry).length
+      manualEntries: usersInZone.filter(u => u.day1ManualEntry).length
     };
   });
 
   // Enhanced chart data with manual attendance breakdown and feedback
   const chartData = [
     { name: "Day 1", count: stats.day1Attendance },
-    { name: "Day 2", count: stats.day2Attendance },
-    { name: "Both Days", count: stats.bothDays },
     { name: "Manual Entries", count: stats.manualEntries.total },
     { name: "Late Entries", count: stats.lateEntries.total }
   ];
@@ -999,17 +939,12 @@ export default function AdminDashboard() {
   const scheduleChartData = [
     { name: "Day 1 Morning", count: stats.day1Schedules.morning },
     { name: "Day 1 Afternoon", count: stats.day1Schedules.afternoon },
-    { name: "Day 1 Evening", count: stats.day1Schedules.evening },
-    { name: "Day 2 Morning", count: stats.day2Schedules.morning },
-    { name: "Day 2 Afternoon", count: stats.day2Schedules.afternoon },
-    { name: "Day 2 Evening", count: stats.day2Schedules.evening }
+    { name: "Day 1 Evening", count: stats.day1Schedules.evening }
   ];
 
   const manualAttendanceChartData = [
     { name: "Day 1 Manual", count: stats.manualEntries.day1 },
-    { name: "Day 2 Manual", count: stats.manualEntries.day2 },
-    { name: "Day 1 Late", count: stats.lateEntries.day1 },
-    { name: "Day 2 Late", count: stats.lateEntries.day2 }
+    { name: "Day 1 Late", count: stats.lateEntries.day1 }
   ];
 
   const feedbackChartData = [
@@ -1048,14 +983,12 @@ export default function AdminDashboard() {
 
     if (reportFilter === "day1") {
       data = data.filter(u => u.day1Attendance);
-    } else if (reportFilter === "day2") {
-      data = data.filter(u => u.day2Attendance);
     } else if (reportFilter === "both") {
-      data = data.filter(u => u.day1Attendance && u.day2Attendance);
+      data = data.filter(u => u.day1Attendance);
     } else if (reportFilter === "none") {
-      data = data.filter(u => !u.day1Attendance && !u.day2Attendance);
+      data = data.filter(u => !u.day1Attendance);
     } else if (reportFilter === "manual") {
-      data = data.filter(u => u.day1ManualEntry || u.day2ManualEntry);
+      data = data.filter(u => u.day1ManualEntry);
     }
 
     if (reportZoneFilter) {
@@ -1077,7 +1010,7 @@ export default function AdminDashboard() {
         // Title
         doc.setFontSize(18);
         doc.setTextColor(0, 0, 0);
-        doc.text("Ahibba Summit 2025 - Registration Details", 14, yPosition);
+        doc.text("Principals Summit 2025 - Registration Details", 14, yPosition);
         yPosition += 12;
 
         // Filter info
@@ -1102,13 +1035,11 @@ export default function AdminDashboard() {
         doc.setFontSize(10);
         doc.text(`Total Records: ${reportData.length}`, 14, yPosition);
         yPosition += 6;
-        doc.text(`Day 1 Attendance: ${reportData.filter(u => u.day1Attendance).length}`, 14, yPosition);
+        doc.text(`Attendance: ${reportData.filter(u => u.day1Attendance).length}`, 14, yPosition);
         yPosition += 6;
-        doc.text(`Day 2 Attendance: ${reportData.filter(u => u.day2Attendance).length}`, 14, yPosition);
+        doc.text(`Manual Entries: ${reportData.filter(u => u.day1ManualEntry).length}`, 14, yPosition);
         yPosition += 6;
-        doc.text(`Manual Entries: ${reportData.filter(u => u.day1ManualEntry || u.day2ManualEntry).length}`, 14, yPosition);
-        yPosition += 6;
-        doc.text(`Late Entries: ${reportData.filter(u => u.day1LateMinutes > 0 || u.day2LateMinutes > 0).length}`, 14, yPosition);
+        doc.text(`Late Entries: ${reportData.filter(u => u.day1LateMinutes > 0).length}`, 14, yPosition);
         yPosition += 12;
 
         // Registration Details Table
@@ -1122,7 +1053,6 @@ export default function AdminDashboard() {
         doc.text("Designation", 75, yPosition);
         doc.text("Zone", 115, yPosition);
         doc.text("Day 1", 140, yPosition);
-        doc.text("Day 2", 170, yPosition);
         yPosition += 10;
 
         // Data rows
@@ -1149,21 +1079,12 @@ export default function AdminDashboard() {
           }
           doc.text(day1Text, 140, yPosition);
           
-          // Day 2 attendance with schedule and late info
-          let day2Text = "Absent";
-          if (user.day2Attendance) {
-            day2Text = getScheduleDisplay("2", user.day2Schedule).substring(0, 8);
-            if (user.day2ManualEntry) day2Text += " (M)";
-            if (user.day2LateMinutes > 0) day2Text += ` L:${user.day2LateMinutes}m`;
-          }
-          doc.text(day2Text, 170, yPosition);
-          
           doc.setDrawColor(200, 200, 200);
           doc.line(14, yPosition + 1, 196, yPosition + 1);
           yPosition += 7;
         });
 
-        doc.save("Ahibba_Registration_Details.pdf");
+        doc.save("Principals_Registration_Details.pdf");
         
         Swal.fire({
           title: 'Success!',
@@ -1200,7 +1121,7 @@ export default function AdminDashboard() {
         // Title
         doc.setFontSize(18);
         doc.setTextColor(0, 0, 0);
-        doc.text("Ahibba Summit 2025 - Schedule Attendance Report", 14, yPosition);
+        doc.text("Principals Summit 2025 - Schedule Attendance Report", 14, yPosition);
         yPosition += 12;
 
         // Summary Statistics
@@ -1213,31 +1134,17 @@ export default function AdminDashboard() {
         doc.setFontSize(10);
         
         // Day 1 Schedule Summary
-        doc.text("Day 1 - October 25, 2025:", 14, yPosition);
+        doc.text("Day 1 - October 27, 2025:", 14, yPosition);
         yPosition += 6;
-        doc.text(`  Morning (10:00 AM): ${stats.day1Schedules.morning} attendees`, 16, yPosition);
+        doc.text(`  Morning (09:30 AM): ${stats.day1Schedules.morning} attendees`, 16, yPosition);
         yPosition += 5;
         doc.text(`  Afternoon (2:30 PM): ${stats.day1Schedules.afternoon} attendees`, 16, yPosition);
         yPosition += 5;
-        doc.text(`  Evening (6:20 PM): ${stats.day1Schedules.evening} attendees`, 16, yPosition);
+        doc.text(`  Evening (6:30 PM): ${stats.day1Schedules.evening} attendees`, 16, yPosition);
         yPosition += 5;
         doc.text(`  Manual Entries: ${stats.manualEntries.day1}`, 16, yPosition);
         yPosition += 5;
         doc.text(`  Late Entries: ${stats.lateEntries.day1}`, 16, yPosition);
-        yPosition += 8;
-
-        // Day 2 Schedule Summary
-        doc.text("Day 2 - October 26, 2025:", 14, yPosition);
-        yPosition += 6;
-        doc.text(`  Morning (8:30 AM): ${stats.day2Schedules.morning} attendees`, 16, yPosition);
-        yPosition += 5;
-        doc.text(`  Afternoon (2:30 PM): ${stats.day2Schedules.afternoon} attendees`, 16, yPosition);
-        yPosition += 5;
-        doc.text(`  Evening (7:00 PM): ${stats.day2Schedules.evening} attendees`, 16, yPosition);
-        yPosition += 5;
-        doc.text(`  Manual Entries: ${stats.manualEntries.day2}`, 16, yPosition);
-        yPosition += 5;
-        doc.text(`  Late Entries: ${stats.lateEntries.day2}`, 16, yPosition);
         yPosition += 12;
 
         // Zone-wise Schedule Breakdown
@@ -1271,23 +1178,11 @@ export default function AdminDashboard() {
             doc.text(`  Day 1 - M: ${day1Morning}, A: ${day1Afternoon}, E: ${day1Evening}`, 16, yPosition);
             yPosition += 4;
             doc.text(`  Manual: ${day1Manual}, Late: ${day1Late}`, 16, yPosition);
-            yPosition += 4;
-
-            // Day 2 schedules for this zone
-            const day2Morning = zoneUsers.filter(u => u.day2Schedule === 'morning').length;
-            const day2Afternoon = zoneUsers.filter(u => u.day2Schedule === 'afternoon').length;
-            const day2Evening = zoneUsers.filter(u => u.day2Schedule === 'evening').length;
-            const day2Manual = zoneUsers.filter(u => u.day2ManualEntry).length;
-            const day2Late = zoneUsers.filter(u => u.day2LateMinutes > 0).length;
-            
-            doc.text(`  Day 2 - M: ${day2Morning}, A: ${day2Afternoon}, E: ${day2Evening}`, 16, yPosition);
-            yPosition += 4;
-            doc.text(`  Manual: ${day2Manual}, Late: ${day2Late}`, 16, yPosition);
             yPosition += 8;
           }
         });
 
-        doc.save("Ahibba_Schedule_Report.pdf");
+        doc.save("Principals_Schedule_Report.pdf");
         
         Swal.fire({
           title: 'Success!',
@@ -1336,10 +1231,10 @@ export default function AdminDashboard() {
     );
   };
 
-  // Render Dashboard Tab (ALL ORIGINAL FUNCTIONALITY PRESERVED)
+  // Render Dashboard Tab (UPDATED FOR SINGLE DAY)
   const renderDashboard = () => (
     <>
-      {/* Stats Cards - Enhanced with Feedback Stats */}
+      {/* Stats Cards - Updated for Single Day */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -1365,7 +1260,7 @@ export default function AdminDashboard() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Day 1 Attendance</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">Attendance</h3>
               <p className="text-3xl font-bold text-gray-800">{stats.day1Attendance}</p>
               <div className="text-xs text-gray-600 mt-1">
                 M: {stats.day1Schedules.morning} | A: {stats.day1Schedules.afternoon} | E: {stats.day1Schedules.evening}
@@ -1384,29 +1279,6 @@ export default function AdminDashboard() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Day 2 Attendance</h3>
-              <p className="text-3xl font-bold text-gray-800">{stats.day2Attendance}</p>
-              <div className="text-xs text-gray-600 mt-1">
-                M: {stats.day2Schedules.morning} | A: {stats.day2Schedules.afternoon} | E: {stats.day2Schedules.evening}
-              </div>
-              <div className="text-xs text-orange-600 mt-1">
-                Manual: {stats.manualEntries.day2} | Late: {stats.lateEntries.day2}
-              </div>
-            </div>
-            <div className="bg-green-100 p-3 rounded-full">
-              <FiCalendar className="text-2xl text-green-500" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
           className="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between">
@@ -1425,9 +1297,32 @@ export default function AdminDashboard() {
             </div>
           </div>
         </motion.div>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500 hover:shadow-lg transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">Summary</h3>
+              <p className="text-2xl font-bold text-gray-800">{stats.day1Attendance}/{stats.totalRegistered}</p>
+              <div className="text-xs text-gray-600 mt-1">
+                Attendance Rate
+              </div>
+              <div className="text-xs text-orange-600 mt-1">
+                {Math.round((stats.day1Attendance / stats.totalRegistered) * 100) || 0}% Present
+              </div>
+            </div>
+            <div className="bg-green-100 p-3 rounded-full">
+              <FiTrendingUp className="text-2xl text-green-500" />
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Enhanced Filters Section - ORIGINAL PRESERVED */}
+      {/* Enhanced Filters Section - UPDATED FOR SINGLE DAY */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1479,8 +1374,7 @@ export default function AdminDashboard() {
             >
               <option value="all">All Users</option>
               <option value="day1">Day 1 Only</option>
-              <option value="day2">Day 2 Only</option>
-              <option value="both">Both Days</option>
+              <option value="both">Attended</option>
               <option value="none">No Attendance</option>
               <option value="manual">Manual Entries Only</option>
               <option value="late">Late Entries Only</option>
@@ -1509,9 +1403,8 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Schedule Filters - ORIGINAL PRESERVED */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-          {/* Day 1 Schedule Filter */}
+        {/* Schedule Filters - UPDATED FOR SINGLE DAY */}
+        <div className="pt-4 border-t border-gray-200">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Day 1 Schedule</label>
             <div className="flex flex-wrap gap-2">
@@ -1540,40 +1433,10 @@ export default function AdminDashboard() {
               ))}
             </div>
           </div>
-
-          {/* Day 2 Schedule Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Day 2 Schedule</label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleScheduleFilter("day2", "all")}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  scheduleFilter.day2 === ""
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                All
-              </button>
-              {Object.entries(day2Schedule).map(([key, schedule]) => (
-                <button
-                  key={key}
-                  onClick={() => handleScheduleFilter("day2", key)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    scheduleFilter.day2 === key
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  {schedule.display.split(' ')[0]}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </motion.div>
 
-      {/* Manual Attendance Section - ORIGINAL PRESERVED */}
+      {/* Manual Attendance Section - UPDATED FOR SINGLE DAY */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1583,10 +1446,10 @@ export default function AdminDashboard() {
           <FiUserCheck className="text-xl text-orange-600" />
           <h3 className="text-lg font-semibold text-gray-800">Manual Attendance Marking</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Day 1 Manual Attendance */}
           <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-            <h4 className="text-lg font-semibold text-orange-800 mb-3">Day 1 - October 25, 2025</h4>
+            <h4 className="text-lg font-semibold text-orange-800 mb-3">Day 1 - October 27, 2025</h4>
             <div className="space-y-2">
               {Object.entries(day1Schedule).map(([key, session]) => (
                 <div key={key} className="flex justify-between items-center p-3 bg-white rounded border">
@@ -1614,41 +1477,10 @@ export default function AdminDashboard() {
               ))}
             </div>
           </div>
-
-          {/* Day 2 Manual Attendance */}
-          <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-            <h4 className="text-lg font-semibold text-orange-800 mb-3">Day 2 - October 26, 2025</h4>
-            <div className="space-y-2">
-              {Object.entries(day2Schedule).map(([key, session]) => (
-                <div key={key} className="flex justify-between items-center p-3 bg-white rounded border">
-                  <div>
-                    <span className="text-sm font-medium text-gray-800">{session.display}</span>
-                    <div className="text-xs text-gray-600">
-                      {session.start} - {session.end}
-                      {isSessionEnded(session) && (
-                        <span className="ml-2 text-green-600 font-medium">✓ Session Ended</span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleManualAttendanceClick(session, "day2")}
-                    disabled={!isSessionEnded(session)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isSessionEnded(session)
-                        ? "bg-orange-600 hover:bg-orange-700 text-white"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    }`}
-                  >
-                    Mark Attendance
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </motion.div>
 
-      {/* Charts Section - ORIGINAL PRESERVED */}
+      {/* Charts Section - UPDATED FOR SINGLE DAY */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -1696,7 +1528,7 @@ export default function AdminDashboard() {
         </motion.div>
       </div>
 
-      {/* Schedule Statistics - ORIGINAL PRESERVED */}
+      {/* Schedule Statistics - UPDATED FOR SINGLE DAY */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1706,13 +1538,13 @@ export default function AdminDashboard() {
           <FiWatch className="text-xl text-orange-600" />
           <h3 className="text-lg font-semibold text-gray-800">Schedule-wise Attendance</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Day 1 Schedule */}
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-lg font-semibold text-blue-800 mb-3">Day 1 - October 25, 2025</h4>
+            <h4 className="text-lg font-semibold text-blue-800 mb-3">Day 1 - October 27, 2025</h4>
             <div className="space-y-2">
               <div className="flex justify-between items-center p-2 bg-white rounded">
-                <span className="text-sm font-medium text-gray-800">Morning (10:00 AM)</span>
+                <span className="text-sm font-medium text-gray-800">Morning (09:30 AM)</span>
                 <div className="text-right">
                   <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold">
                     {stats.day1Schedules.morning} attendees
@@ -1734,7 +1566,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex justify-between items-center p-2 bg-white rounded">
-                <span className="text-sm font-medium text-gray-800">Evening (6:20 PM)</span>
+                <span className="text-sm font-medium text-gray-800">Evening (6:30 PM)</span>
                 <div className="text-right">
                   <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm font-semibold">
                     {stats.day1Schedules.evening} attendees
@@ -1746,50 +1578,10 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-
-          {/* Day 2 Schedule */}
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <h4 className="text-lg font-semibold text-green-800 mb-3">Day 2 - October 26, 2025</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center p-2 bg-white rounded">
-                <span className="text-sm font-medium text-gray-800">Morning (8:30 AM)</span>
-                <div className="text-right">
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold">
-                    {stats.day2Schedules.morning} attendees
-                  </span>
-                  <div className="text-xs text-orange-600 mt-1">
-                    Manual: {registeredUsers.filter(u => u.day2Schedule === 'morning' && u.day2ManualEntry).length}
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-between items-center p-2 bg-white rounded">
-                <span className="text-sm font-medium text-gray-800">Afternoon (2:30 PM)</span>
-                <div className="text-right">
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">
-                    {stats.day2Schedules.afternoon} attendees
-                  </span>
-                  <div className="text-xs text-orange-600 mt-1">
-                    Manual: {registeredUsers.filter(u => u.day2Schedule === 'afternoon' && u.day2ManualEntry).length}
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-between items-center p-2 bg-white rounded">
-                <span className="text-sm font-medium text-gray-800">Evening (7:00 PM)</span>
-                <div className="text-right">
-                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm font-semibold">
-                    {stats.day2Schedules.evening} attendees
-                  </span>
-                  <div className="text-xs text-orange-600 mt-1">
-                    Manual: {registeredUsers.filter(u => u.day2Schedule === 'evening' && u.day2ManualEntry).length}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </motion.div>
 
-      {/* Zone Statistics - ORIGINAL PRESERVED */}
+      {/* Zone Statistics - UPDATED FOR SINGLE DAY */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1816,9 +1608,6 @@ export default function AdminDashboard() {
                   Day 1
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Day 2
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Manual Entries
                 </th>
               </tr>
@@ -1835,9 +1624,6 @@ export default function AdminDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">
                     {stat.day1}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">
-                    {stat.day2}
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-semibold">
                     {stat.manualEntries}
                   </td>
@@ -1848,7 +1634,7 @@ export default function AdminDashboard() {
         </div>
       </motion.div>
 
-      {/* Users Table with Pagination - ORIGINAL PRESERVED */}
+      {/* Users Table with Pagination - UPDATED FOR SINGLE DAY */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1886,9 +1672,6 @@ export default function AdminDashboard() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Day 1
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Day 2
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -1946,42 +1729,6 @@ export default function AdminDashboard() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {user.day2Attendance ? (
-                        <div className="flex flex-col">
-                          <div className="flex items-center space-x-1 mb-1">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                              <FiCheckSquare className="mr-1" />
-                              Present
-                            </span>
-                            {user.day2ManualEntry && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">
-                                <FiUserCheck className="mr-1" />
-                                Manual
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-600">
-                            {getScheduleDisplay("2", user.day2Schedule)}
-                            {user.day2LateMinutes > 0 && (
-                              <span className="text-orange-600 ml-1">
-                                (Late: {user.day2LateMinutes}m)
-                              </span>
-                            )}
-                          </span>
-                          {user.day2Remarks && (
-                            <span className="text-xs text-gray-500 mt-1 flex items-start">
-                              <FiMessageSquare className="mr-1 mt-0.5 flex-shrink-0" />
-                              {user.day2Remarks}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                          ✗ Absent
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex space-x-2 justify-center">
                         <button
                           onClick={() => handleEditClick(user)}
@@ -2003,7 +1750,7 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center">
+                  <td colSpan="6" className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center justify-center text-gray-500">
                       <FiUsers className="text-4xl mb-2 text-gray-300" />
                       <p className="text-lg font-medium">No users found</p>
@@ -2028,7 +1775,7 @@ export default function AdminDashboard() {
     </>
   );
 
-  // Render User Registration Tab - ORIGINAL PRESERVED
+  // Render User Registration Tab - UPDATED FOR SINGLE DAY
   const renderUserRegistration = () => (
     <motion.div
       initial={{ y: 20, opacity: 0 }}
@@ -2100,7 +1847,7 @@ export default function AdminDashboard() {
     </motion.div>
   );
 
-  // Render Zones Management Tab - ORIGINAL PRESERVED
+  // Render Zones Management Tab - UNCHANGED
   const renderZonesManagement = () => (
     <motion.div
       initial={{ y: 20, opacity: 0 }}
@@ -2154,7 +1901,7 @@ export default function AdminDashboard() {
     </motion.div>
   );
 
-  // Render Feedback Tab - NEW FEATURE ADDED
+  // Render Feedback Tab - UNCHANGED
   const renderFeedback = () => (
     <motion.div
       initial={{ y: 20, opacity: 0 }}
@@ -2492,7 +2239,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Ahibba Summit 2025</h1>
+                <h1 className="text-2xl font-bold text-white">Principals Summit 2025</h1>
                 <p className="text-sm text-blue-100 flex items-center">
                   <FiTrendingUp className="mr-1" />
                   Admin Dashboard
@@ -2611,11 +2358,6 @@ export default function AdminDashboard() {
                               Day 1
                             </span>
                           )}
-                          {user.day2Attendance && (
-                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                              Day 2
-                            </span>
-                          )}
                         </div>
                       </div>
                     ))}
@@ -2632,7 +2374,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Edit User Modal */}
+        {/* Edit User Modal - UPDATED FOR SINGLE DAY */}
         {editingUser && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <motion.div
@@ -2719,7 +2461,7 @@ export default function AdminDashboard() {
                       id="day1Attendance"
                     />
                     <label htmlFor="day1Attendance" className="text-sm font-medium text-gray-700 cursor-pointer">
-                      Day 1 Attendance (Oct 25, 2025)
+                      Attendance (Oct 27, 2025)
                     </label>
                   </div>
                   
@@ -2775,82 +2517,7 @@ export default function AdminDashboard() {
                           value={editFormData.day1Remarks || ""}
                           onChange={(e) => handleEditChange("day1Remarks", e.target.value)}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                          placeholder="Enter remarks for Day 1 attendance"
-                          rows="2"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Day 2 Attendance */}
-                <div className="border rounded-lg p-4 bg-green-50">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <input
-                      type="checkbox"
-                      checked={editFormData.day2Attendance || false}
-                      onChange={() => handleToggleAttendance("day2Attendance")}
-                      className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                      id="day2Attendance"
-                    />
-                    <label htmlFor="day2Attendance" className="text-sm font-medium text-gray-700 cursor-pointer">
-                      Day 2 Attendance (Oct 26, 2025)
-                    </label>
-                  </div>
-                  
-                  {editFormData.day2Attendance && (
-                    <div className="ml-6 space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Select Schedule:</label>
-                        <div className="flex flex-wrap gap-2">
-                          {Object.entries(day2Schedule).map(([key, schedule]) => (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => handleScheduleChange("day2", key)}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                editFormData.day2Schedule === key
-                                  ? "bg-green-600 text-white"
-                                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                              }`}
-                            >
-                              {schedule.display}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Late Minutes and Remarks for Day 2 */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Late Minutes</label>
-                          <input
-                            type="number"
-                            value={editFormData.day2LateMinutes || 0}
-                            onChange={(e) => handleEditChange("day2LateMinutes", parseInt(e.target.value) || 0)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                            placeholder="Late minutes"
-                            min="0"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Manual Entry</label>
-                          <input
-                            type="checkbox"
-                            checked={editFormData.day2ManualEntry || false}
-                            onChange={(e) => handleEditChange("day2ManualEntry", e.target.checked)}
-                            className="w-4 h-4 text-green-600 rounded focus:ring-green-500 mt-2"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
-                        <textarea
-                          value={editFormData.day2Remarks || ""}
-                          onChange={(e) => handleEditChange("day2Remarks", e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                          placeholder="Enter remarks for Day 2 attendance"
+                          placeholder="Enter remarks for attendance"
                           rows="2"
                         />
                       </div>

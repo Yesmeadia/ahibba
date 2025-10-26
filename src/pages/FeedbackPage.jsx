@@ -149,7 +149,7 @@ export default function FeedbackPage() {
     <div
       className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative"
       style={{
-        backgroundImage: 'url("/bg.png")',
+        backgroundImage: 'url("/bg.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'

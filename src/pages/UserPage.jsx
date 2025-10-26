@@ -28,57 +28,33 @@ export default function AttendancePage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Event Dates
+  // Event Dates - Only Day 1
   const eventDates = {
-    day1: new Date('2025-10-25T00:00:00+05:30'),
-    day2: new Date('2025-10-26T00:00:00+05:30')
+    day1: new Date('2025-10-27T00:00:00+05:30'),
   };
 
-  // Enhanced schedule configuration with buffer times
+  // Enhanced schedule configuration with buffer times - Only Day 1
   const schedules = {
     day1: {
       morning: { 
-        start: "09:45", 
+        start: "09:00", 
         end: "11:10", 
-        display: "Morning 10:00 AM",
-        date: "2025-10-25",
+        display: "Morning 09:30 AM",
+        date: "2025-10-27",
         buffer: 15 // minutes buffer before/after
       },
       afternoon: { 
         start: "14:30", 
-        end: "15:17", 
+        end: "14:40", 
         display: "Afternoon 2:30 PM",
-        date: "2025-10-25",
+        date: "2025-10-27",
         buffer: 15
       },
       evening: { 
-        start: "18:15", 
-        end: "18:50", 
-        display: "Evening 6:20 PM",
-        date: "2025-10-25",
-        buffer: 15
-      }
-    },
-    day2: {
-      morning: { 
-        start: "08:15", 
-        end: "08:45", 
-        display: "Morning 8:30 AM",
-        date: "2025-10-26",
-        buffer: 15
-      },
-      afternoon: { 
-        start: "14:15", 
-        end: "16:45", 
-        display: "Afternoon 2:30 PM",
-        date: "2025-10-26",
-        buffer: 15
-      },
-      evening: { 
-        start: "18:30", 
-        end: "21:00", 
-        display: "Evening 7:00 PM",
-        date: "2025-10-26",
+        start: "18:20", 
+        end: "18:40", 
+        display: "Evening 6:30 PM",
+        date: "2025-10-27",
         buffer: 15
       }
     }
@@ -127,8 +103,8 @@ export default function AttendancePage() {
   const getCurrentActiveSchedules = () => {
     const activeSchedules = [];
     
-    // Check both days
-    ['1', '2'].forEach(dayNum => {
+    // Check only day 1
+    ['1'].forEach(dayNum => {
       if (!isDayActive(dayNum)) return;
       
       const daySchedules = schedules[`day${dayNum}`];
@@ -412,14 +388,12 @@ export default function AttendancePage() {
         [timeField]: new Date().toISOString()
       }));
 
-      // Trigger voice and confetti for Day 1
-      if (day === "1") {
-        try {
-          playWelcomeVoice(userData.name);
-          createConfetti();
-        } catch (error) {
-          console.log("Animation error (non-critical):", error);
-        }
+      // Trigger voice and confetti
+      try {
+        playWelcomeVoice(userData.name);
+        createConfetti();
+      } catch (error) {
+        console.log("Animation error (non-critical):", error);
       }
 
       setMessage(`Day ${day} - ${getScheduleDisplay(day, schedule)} attendance marked successfully!`);
@@ -460,10 +434,6 @@ export default function AttendancePage() {
   };
 
   const isDay1Marked = userData?.day1Attendance;
-  const isDay2Marked = userData?.day2Attendance;
-  
-  // Day 2 can only be selected if Day 1 is marked AND it's Day 2 event date
-  const canSelectDay2 = isDay1Marked && isDayActive("2");
 
   // Enhanced schedule display in the UI
   const renderScheduleOptions = (dayNum) => {
@@ -555,7 +525,7 @@ export default function AttendancePage() {
     <div 
       className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative"
       style={{
-        backgroundImage: 'url("/bg.png")',
+        backgroundImage: 'url("/bg.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
@@ -676,11 +646,6 @@ export default function AttendancePage() {
                       ✓ Day 1: {getScheduleDisplay("1", userData.day1Schedule)} on {formatDate(eventDates.day1)}
                     </p>
                   )}
-                  {userData.day2Attendance && (
-                    <p className="text-green-600 font-medium">
-                      ✓ Day 2: {getScheduleDisplay("2", userData.day2Schedule)} on {formatDate(eventDates.day2)}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -718,51 +683,10 @@ export default function AttendancePage() {
                       {formatDate(eventDates.day1)}
                     </div>
                   </button>
-                  <button
-                    onClick={() => {
-                      if (canSelectDay2) {
-                        setDay("2");
-                        setSchedule("");
-                      }
-                    }}
-                    className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all relative ${
-                      day === "2"
-                        ? "bg-green-600 text-white shadow-lg scale-105"
-                        : !canSelectDay2 || isDayLocked("2")
-                        ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                    disabled={!canSelectDay2 || isDayLocked("2")}
-                    title={!isDay1Marked ? "Complete Day 1 attendance first" : 
-                           isDayLocked("2") ? `Available only on ${formatDate(eventDates.day2)}` : 
-                           `Mark attendance for ${formatDate(eventDates.day2)}`}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      {!canSelectDay2 && !isDay2Marked && (
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      {isDay2Marked && (
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      Day 2 {isDay2Marked ? "✓" : ""}
-                    </div>
-                    <div className="text-xs mt-1 opacity-75">
-                      {formatDate(eventDates.day2)}
-                    </div>
-                  </button>
                 </div>
                 {!isDay1Marked && !isDayActive("1") && (
                   <p className="text-xs text-amber-600 mt-1">
                      Day 1 available only on {formatDate(eventDates.day1)}
-                  </p>
-                )}
-                {isDay1Marked && !isDayActive("2") && (
-                  <p className="text-xs text-amber-600 mt-1">
-                     Day 2 available only on {formatDate(eventDates.day2)}
                   </p>
                 )}
               </div>
@@ -779,10 +703,10 @@ export default function AttendancePage() {
                   {/* Schedule Display */}
                   <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      {day === "1" ? `Day 1 Schedule - ${formatDate(eventDates.day1)}` : `Day 2 Schedule - ${formatDate(eventDates.day2)}`}
+                      Day 1 Schedule - {formatDate(eventDates.day1)}
                     </h4>
                     <div className="space-y-2 text-xs text-gray-600">
-                      {Object.entries(schedules[`day${day}`]).map(([scheduleType, slot]) => (
+                      {Object.entries(schedules.day1).map(([scheduleType, slot]) => (
                         <div key={scheduleType} className="flex justify-between items-center p-2 bg-white rounded border">
                           <span>{slot.display}</span>
                           <span className={`text-xs font-medium px-2 py-1 rounded ${

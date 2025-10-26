@@ -7,7 +7,7 @@ export default function NotFoundPage() {
       {/* Background image with overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/bg.png)' }}
+        style={{ backgroundImage: 'url(/bg.jpg)' }}
       >
         <div className="absolute inset-0 "></div>
       </div>
